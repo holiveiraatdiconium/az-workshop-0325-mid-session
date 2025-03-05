@@ -94,7 +94,7 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
             .ThenByDescending(s => s.Checkin)
             .ThenByDescending(s => s.Timestamp);
 
-        string html = @"
+        string html = $@"
         <html>
             <head>
                 <style>
@@ -107,8 +107,8 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
                         text-align: left;
                         border-bottom: 1px solid #ddd;
                     }
-                    tr:hover {background-color: #f5f5f5;}
-                    tr.highlight {background-color: #ffebcd;}
+                    tr:hover {{background-color: #f5f5f5;}}
+                    tr.highlight {{background-color: #ffebcd;}}
                     th {
                         background-color: #4CAF50;
                         color: white;
@@ -133,8 +133,14 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
             html += $"<tr{highlight}><td>{rowNumber++}</td><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
         }
 
-        html += @"
-                </table>
+        html += $@"
+            </table>
+            <ol>
+                <li><a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/msi' target='_blank'>Activate Identity</a> on the web app.</li>
+                <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
+                <li>Add the role 'Storage Table Data Contributor'.</li>
+                <li>Set the environment variable <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/environmentVariablesAppSettings' target='_blank'><code>AZURE_STORAGE_ACCOUNT_URL</code></a> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
+            </ol>
             </body>
         </html>";
 
