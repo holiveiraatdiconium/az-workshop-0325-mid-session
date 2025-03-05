@@ -18,6 +18,13 @@ app.UseHttpsRedirection();
 
 app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
 {
+     string instructions = $@"
+        <ol>
+            <li><a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/msi' target='_blank'>Activate Identity</a> on the web app.</li>
+            <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
+            <li>Add the role 'Storage Table Data Contributor'.</li>
+            <li>Set the environment variable <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/environmentVariablesAppSettings' target='_blank'><code>AZURE_STORAGE_ACCOUNT_URL</code></a> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
+        </ol>";
     string? connectionString = configuration["AZURE_STORAGE_CONNECTION_STRING"];
     TableServiceClient serviceClient;
 
@@ -28,17 +35,12 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
             string? storageAccountUrl = configuration["AZURE_STORAGE_ACCOUNT_URL"];
             if (string.IsNullOrEmpty(storageAccountUrl))
             {
-                string errorHtml = @"
+                string errorHtml = $@"
                 <html>
                     <body>
                         <h1>Error</h1>
                         <p>Azure Storage account URL is not configured.</p>
-                        <ol>
-                            <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
-                            <li>Activate Identity on the web app.</li>
-                            <li>Add the role 'Storage Table Data Contributor'.</li>
-                            <li>Set the environment variable <code>AZURE_STORAGE_ACCOUNT_URL</code> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
-                        </ol>
+                        {instructions}
                     </body>
                 </html>";
                 return Results.Content(errorHtml, "text/html");
@@ -63,6 +65,8 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
             var hostParts = context.Request.Host.Host.Split('.');
             sessionId = hostParts[0].Split('-').Last();
         }
+
+
 
         List<SessionResult> sessions = new List<SessionResult>();
         await foreach (TableEntity entity in tableClient.QueryAsync<TableEntity>())
@@ -134,13 +138,8 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         }
 
         html += $@"
-            </table>
-            <ol>
-                <li><a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/msi' target='_blank'>Activate Identity</a> on the web app.</li>
-                <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
-                <li>Add the role 'Storage Table Data Contributor'.</li>
-                <li>Set the environment variable <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/environmentVariablesAppSettings' target='_blank'><code>AZURE_STORAGE_ACCOUNT_URL</code></a> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
-            </ol>
+                </table>
+                {instructions}
             </body>
         </html>";
 
@@ -148,7 +147,15 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
     }
     catch (Exception ex)
     {
-        string errorHtml = $"<html><body><h1>Error</h1><p>{ex.Message}</p></body></html>";
+        string errorHtml = $@"
+        <html>
+            <body>
+                <h1>Error</h1>
+                <p>{ex.Message}</p>
+                {instructions}
+            </body>
+        </html>";
+
         return Results.Content(errorHtml, "text/html");
     }
 });
