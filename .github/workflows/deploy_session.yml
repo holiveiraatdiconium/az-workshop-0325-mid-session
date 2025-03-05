@@ -46,7 +46,23 @@ jobs:
           az login --service-principal -u ${{ vars.ARM_CLIENT_ID }} -p ${{ secrets.ARM_CLIENT_SECRET }} --tenant ${{ vars.ARM_TENANT_ID }}
           echo "::set-output name=exists::$(az group exists --name RG-pt-azure-workshop)"
 
+      - name: Check if Web App exists
+        id: check_webapp
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        run: |
+          az login --service-principal -u ${{ vars.ARM_CLIENT_ID }} -p ${{ secrets.ARM_CLIENT_SECRET }} --tenant ${{ vars.ARM_TENANT_ID }}
+          if az webapp show --name "session-wa-${{ github.event.inputs.sessionid }}" --resource-group "RG-pt-azure-workshop"; then
+            echo "::set-output name=webapp_exists::true"
+          else
+            echo "::set-output name=webapp_exists::false"
+          fi
+
       - name: Apply Terraform
+        if: steps.check_webapp.outputs.webapp_exists == 'false'
         env:
           ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
           ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
@@ -101,6 +117,17 @@ jobs:
       
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'session-wa-${{ github.event.inputs.sessionid }}'
+          slot-name: 'Production'
+          package: .
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Update Azure Web App
+        if: needs.infra.outputs.webapp_exists == 'true'
+        id: update-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'session-wa-${{ github.event.inputs.sessionid }}'
