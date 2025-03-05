@@ -94,13 +94,47 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
             .ThenByDescending(s => s.Checkin)
             .ThenByDescending(s => s.Timestamp);
 
-        string html = "<html><body><h1>Session Results</h1><table border='1'><tr><th>Session ID</th><th>Timestamp</th><th>User</th><th>Checkin</th></tr>";
+        string html = @"
+        <html>
+            <head>
+                <style>
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                    }
+                    th, td {
+                        padding: 12px;
+                        text-align: left;
+                        border-bottom: 1px solid #ddd;
+                    }
+                    tr:hover {background-color: #f5f5f5;}
+                    tr.highlight {background-color: #ffebcd;}
+                    th {
+                        background-color: #4CAF50;
+                        color: white;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Session Results</h1>
+                <table>
+                    <tr>
+                        <th>Session ID</th>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Checkin</th>
+                    </tr>";
+
         foreach (var session in orderedSessions)
         {
-            string highlight = session.SessionId == sessionId ? " style='background-color:yellow'" : "";
+            string highlight = session.SessionId == sessionId ? " class='highlight'" : "";
             html += $"<tr{highlight}><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
         }
-        html += "</table></body></html>";
+
+        html += @"
+                </table>
+            </body>
+        </html>";
 
         return Results.Content(html, "text/html");
     }
