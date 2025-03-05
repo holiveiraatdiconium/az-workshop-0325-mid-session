@@ -18,15 +18,27 @@ app.UseHttpsRedirection();
 
 app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
 {
-     string instructions = $@"
-        <ol>
-            <li><a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/msi' target='_blank'>Activate Identity</a> on the web app.</li>
-            <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
-            <li>Add the role 'Storage Table Data Contributor'.</li>
-            <li>Set the environment variable <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/environmentVariablesAppSettings' target='_blank'><code>AZURE_STORAGE_ACCOUNT_URL</code></a> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
-        </ol>";
     string? connectionString = configuration["AZURE_STORAGE_CONNECTION_STRING"];
     TableServiceClient serviceClient;
+
+    string sessionId;
+    if (context.Request.Host.Host.Contains("localhost") && context.Request.Query.ContainsKey("sessionid"))
+    {
+        sessionId = context.Request.Query["sessionid"];
+    }
+    else
+    {
+        var hostParts = context.Request.Host.Host.Split('.');
+        sessionId = hostParts[0].Split('-').Last();
+    }
+
+    string instructions = $@"
+    <ol>
+        <li><a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/msi' target='_blank'>Activate Identity</a> on the web app.</li>
+        <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
+        <li>Add the role 'Storage Table Data Contributor'.</li>
+        <li>Set the environment variable <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Web/sites/session-wa-{sessionId}/environmentVariablesAppSettings' target='_blank'><code>AZURE_STORAGE_ACCOUNT_URL</code></a> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
+    </ol>";
 
     try
     {
@@ -54,20 +66,7 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         }
 
         TableClient tableClient = serviceClient.GetTableClient("Sessions");
-
-        string sessionId;
-        if (context.Request.Host.Host.Contains("localhost") && context.Request.Query.ContainsKey("sessionid"))
-        {
-            sessionId = context.Request.Query["sessionid"];
-        }
-        else
-        {
-            var hostParts = context.Request.Host.Host.Split('.');
-            sessionId = hostParts[0].Split('-').Last();
-        }
-
-
-
+ 
         List<SessionResult> sessions = new List<SessionResult>();
         await foreach (TableEntity entity in tableClient.QueryAsync<TableEntity>())
         {
