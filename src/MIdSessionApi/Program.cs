@@ -98,21 +98,21 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         <html>
             <head>
                 <style>
-                    table {
+                    table {{
                         width: 100%;
                         border-collapse: collapse;
-                    }
-                    th, td {
+                    }}
+                    th, td {{
                         padding: 12px;
                         text-align: left;
                         border-bottom: 1px solid #ddd;
-                    }
+                    }}
                     tr:hover {{background-color: #f5f5f5;}}
                     tr.highlight {{background-color: #ffebcd;}}
-                    th {
+                    th {{
                         background-color: #4CAF50;
                         color: white;
-                    }
+                    }}
                 </style>
             </head>
             <body>
