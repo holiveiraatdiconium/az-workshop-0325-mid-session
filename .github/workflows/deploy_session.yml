@@ -141,4 +141,4 @@ jobs:
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.SESSIONS_DB_CONNECTIONSTRING }}
         run: |
-          az storage entity merge --entity PartitionKey=defaultPartition RowKey=${{ github.event.inputs.sessionid }} status=deployed --table-name Sessions --connection-string ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+          az storage entity merge --entity PartitionKey=defaultPartition RowKey=${{ github.event.inputs.sessionid }} status=deployed --table-name Sessions --connection-string ${{ secrets.SESSIONS_DB_CONNECTIONSTRING }}
