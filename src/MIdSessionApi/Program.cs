@@ -16,7 +16,7 @@ var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-app.MapGet("/sessions", async (IConfiguration configuration) =>
+app.MapGet("/", async (IConfiguration configuration) =>
 {
     string? connectionString = configuration["AZURE_STORAGE_CONNECTION_STRING"];
     TableServiceClient serviceClient;
@@ -47,12 +47,23 @@ app.MapGet("/sessions", async (IConfiguration configuration) =>
             {
                 SessionId = entity.RowKey,
                 Timestamp = entity.Timestamp,
-                User = entity["Email"]?.ToString() ?? string.Empty
+                User = entity["Email"]?.ToString() ?? string.Empty,
+                Checkin = entity.ContainsKey("checkin") ? (DateTime?)entity["checkin"] : null
+               
             });
+
+            if (!entity.ContainsKey("checkin"))
+            {
+                entity["checkin"] = DateTime.UtcNow;
+                await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Merge);
+            }
         }
     }
 
-    var orderedSessions = sessions.OrderByDescending(s => s.Timestamp);
+    var orderedSessions = sessions
+        .OrderByDescending(s => s.Checkin.HasValue)
+        .ThenByDescending(s => s.Checkin)
+        .ThenByDescending(s => s.Timestamp);
 
     return Results.Ok(orderedSessions);
 });

@@ -5,5 +5,6 @@ namespace MIdSessionApi.Models
         public string SessionId { get; set; }
         public DateTimeOffset? Timestamp { get; set; }
         public string User { get; set; }
+        public DateTime? Checkin { get; set; }
     }
 }
