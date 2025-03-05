@@ -33,12 +33,12 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
                     <body>
                         <h1>Error</h1>
                         <p>Azure Storage account URL is not configured.</p>
-                        <ul>
+                        <ol>
                             <li>Ensure this app is added to the storage account at <a href='https://portal.azure.com/#@mydiconium.onmicrosoft.com/resource/subscriptions/48ee300d-8738-496a-9366-1271ebefc1e6/resourceGroups/RG-pt-azure-workshop/providers/Microsoft.Storage/storageAccounts/diconiumptazureworkshop/overview'>this URL</a> using role assignment and managed identity.</li>
                             <li>Activate Identity on the web app.</li>
                             <li>Add the role 'Storage Table Data Contributor'.</li>
                             <li>Set the environment variable <code>AZURE_STORAGE_ACCOUNT_URL</code> to <code>https://diconiumptazureworkshop.table.core.windows.net/Sessions</code>.</li>
-                        </ul>
+                        </ol>
                     </body>
                 </html>";
                 return Results.Content(errorHtml, "text/html");
