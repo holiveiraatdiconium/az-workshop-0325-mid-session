@@ -1,0 +1,6 @@
+@MIdSessionApi_HostAddress = http://localhost:5291
+
+GET {{MIdSessionApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
