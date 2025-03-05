@@ -119,16 +119,18 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
                 <h1>Session Results</h1>
                 <table>
                     <tr>
+                        <th>#</th>
                         <th>Session ID</th>
                         <th>Timestamp</th>
                         <th>User</th>
                         <th>Checkin</th>
                     </tr>";
 
+        int rowNumber = 1;
         foreach (var session in orderedSessions)
         {
             string highlight = session.SessionId == sessionId ? " class='highlight'" : "";
-            html += $"<tr{highlight}><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
+            html += $"<tr{highlight}><td>{rowNumber++}</td><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
         }
 
         html += @"
