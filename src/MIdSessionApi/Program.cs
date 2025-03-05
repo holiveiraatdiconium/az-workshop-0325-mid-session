@@ -68,6 +68,8 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         await foreach (TableEntity entity in tableClient.QueryAsync<TableEntity>())
         {
             bool isCurrentSession = entity.RowKey == sessionId;
+            DateTime? checkinTime = entity.ContainsKey("checkin") ? (DateTime?)((DateTimeOffset)entity["checkin"]).UtcDateTime : null;
+
             if (entity["Status"]?.ToString() == "deployed")
             {
                 sessions.Add(new SessionResult
@@ -75,12 +77,13 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
                     SessionId = entity.RowKey,
                     Timestamp = entity.Timestamp ?? DateTimeOffset.UtcNow,
                     User = entity["Email"]?.ToString() ?? string.Empty,
-                    Checkin = entity.ContainsKey("checkin") ? (DateTime?)entity["checkin"] : null
+                    Checkin = checkinTime
                 });
 
                 if (isCurrentSession && !entity.ContainsKey("checkin"))
                 {
-                    entity["checkin"] = DateTime.UtcNow;
+                    checkinTime = DateTime.UtcNow;
+                    entity["checkin"] = checkinTime;
                     await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Merge);
                 }
             }
