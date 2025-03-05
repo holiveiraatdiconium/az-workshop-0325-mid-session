@@ -72,7 +72,7 @@ jobs:
         working-directory: terraform
 
   build:
-    needs: [infra]
+    if: always()
     runs-on: windows-latest
     permissions:
       contents: read #This is required for actions/checkout
@@ -98,6 +98,7 @@ jobs:
           path: ${{env.DOTNET_ROOT}}/myapp
 
   deploy:
+    if: always()
     runs-on: windows-latest
     needs: build
     environment:

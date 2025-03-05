@@ -11,14 +11,6 @@ data "azurerm_resource_group" "rg" {
   name = "RG-pt-azure-workshop"
 }
 
-resource "azurerm_storage_account" "sa" {
-  name                     = substr("ssa${var.sessionid}", 0, 23)
-  resource_group_name      = data.azurerm_resource_group.rg.name
-  location                 = data.azurerm_resource_group.rg.location
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-}
-
 resource "azurerm_windows_web_app" "web_app" {
   name                = "session-wa-${var.sessionid}"
   location            = data.azurerm_resource_group.rg.location
