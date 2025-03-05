@@ -65,9 +65,10 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         }
 
         List<SessionResult> sessions = new List<SessionResult>();
-        await foreach (TableEntity entity in tableClient.QueryAsync<TableEntity>(e => e.RowKey == sessionId))
+        await foreach (TableEntity entity in tableClient.QueryAsync<TableEntity>())
         {
-            if (entity["Status"]?.ToString() == "ready")
+            bool isCurrentSession = entity.RowKey == sessionId;
+            if (entity["Status"]?.ToString() == "deployed")
             {
                 sessions.Add(new SessionResult
                 {
@@ -77,7 +78,7 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
                     Checkin = entity.ContainsKey("checkin") ? (DateTime?)entity["checkin"] : null
                 });
 
-                if (!entity.ContainsKey("checkin"))
+                if (isCurrentSession && !entity.ContainsKey("checkin"))
                 {
                     entity["checkin"] = DateTime.UtcNow;
                     await tableClient.UpdateEntityAsync(entity, entity.ETag, TableUpdateMode.Merge);
@@ -93,7 +94,8 @@ app.MapGet("/", async (HttpContext context, IConfiguration configuration) =>
         string html = "<html><body><h1>Session Results</h1><table border='1'><tr><th>Session ID</th><th>Timestamp</th><th>User</th><th>Checkin</th></tr>";
         foreach (var session in orderedSessions)
         {
-            html += $"<tr><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
+            string highlight = session.SessionId == sessionId ? " style='background-color:yellow'" : "";
+            html += $"<tr{highlight}><td>{session.SessionId}</td><td>{session.Timestamp}</td><td>{session.User}</td><td>{session.Checkin}</td></tr>";
         }
         html += "</table></body></html>";
 
