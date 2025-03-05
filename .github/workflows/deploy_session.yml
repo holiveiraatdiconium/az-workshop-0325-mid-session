@@ -1,0 +1,103 @@
+name: Deploy Session Resources
+
+# Controls when the workflow will run
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      sessionid:
+        description: 'Session ID'
+        required: true
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  infra:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.0.0
+
+      - name: Initialize Terraform
+        run: terraform init
+        working-directory: terraform
+
+      - name: Check if Resource Group exists
+        id: check_rg
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        run: |
+          az login --service-principal -u ${{ vars.ARM_CLIENT_ID }} -p ${{ secrets.ARM_CLIENT_SECRET }} --tenant ${{ vars.ARM_TENANT_ID }}
+          echo "::set-output name=exists::$(az group exists --name RG-pt-azure-workshop)"
+
+      - name: Apply Terraform
+        env:
+          ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+          ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        run: terraform apply -auto-approve -var="sessionid=${{ github.event.inputs.sessionid }}"
+        working-directory: terraform
+
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Build with dotnet
+        run: dotnet build --configuration Release
+
+      - name: dotnet publish
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: .net-app
+          path: ${{env.DOTNET_ROOT}}/myapp
+
+  deploy:
+    runs-on: windows-latest
+    needs: build
+    environment:
+      name: 'Production'
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: .net-app
+      
+      - name: Deploy to Azure Web App
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+            app-name: 'session-wa-${{ github.event.inputs.sessionid }}'
+          slot-name: 'Production'
+          package: .
+        env:
+          AZURE_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
