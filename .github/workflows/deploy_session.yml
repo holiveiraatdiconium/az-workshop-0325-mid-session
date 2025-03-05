@@ -92,7 +92,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v1
         with:
-          creds: '{"clientSecret":  ${{ secrets.ARM_CLIENT_SECRET }},"subscriptionId": ${{ vars.ARM_SUBSCRIPTION_ID }},"tenantId":  ${{ vars.ARM_TENANT_ID }},"clientId":  ${{ vars.ARM_CLIENT_ID }}}'
+          creds: '{"clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}","subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}","tenantId": "${{ vars.ARM_TENANT_ID }}","clientId": "${{ vars.ARM_CLIENT_ID }}"}'
       
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
