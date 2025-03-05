@@ -100,7 +100,7 @@ jobs:
   deploy:
     if: always()
     runs-on: windows-latest
-    needs: build
+    needs: [build, infra]
     environment:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
@@ -141,4 +141,4 @@ jobs:
         env:
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.SESSIONS_DB_CONNECTIONSTRING }}
         run: |
-          az storage entity merge --entity PartitionKey=defaultPartition RowKey=${{ github.event.inputs.sessionid }} status=deployed --table-name Sessions --connection-string "${{ secrets.SESSIONS_DB_CONNECTIONSTRING }}"
+          az storage entity merge --entity PartitionKey=defaultPartition RowKey=${{ github.event.inputs.sessionid }} Status=deployed LastDeployed=$(date -u +"%Y-%m-%dT%H:%M:%SZ") --table-name Sessions --connection-string "${{ secrets.SESSIONS_DB_CONNECTIONSTRING }}"
